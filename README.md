@@ -46,6 +46,8 @@ PNG data is embedded into the FNT's `data=` section.
 
 This utility comes bundled with several fonts from the [JFDotFont](http://jikasei.me/font/jf-dotfont/) and [KHDotFont](http://jikasei.me/font/kh-dotfont/) open font sets.
 
+Processed FNT files from these sets can be found in the `fnt/` folder.
+
 Font specimens can be previewed on their respective pages, or in the `png/` folder
 of this repository.
 
