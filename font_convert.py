@@ -3,15 +3,25 @@
 # NOTE This script requires the `bdfparser` and `pillow` pip packages
 #      It also assumes the `otf2bdf` utility is installed
 
+# pip install pypng
+# pip install pillow
+# pip install bdfparser
+
 import base64
-import re
 import math
+import png
+import re
 import subprocess
 import os
 from bdfparser import Font
 from PIL import Image
 from io import BytesIO
 from pathlib import Path
+
+def access_bit(data, num):
+    base = int(num // 8)
+    shift = 7 - int(num % 8)
+    return (data[base] >> shift) & 0x1
 
 p = Path('.')
 for font_path in p.glob('ttf/*.ttf'):
@@ -72,12 +82,22 @@ for font_path in p.glob('ttf/*.ttf'):
 
     # Write the PNG image
     font_preview = font.drawall()
-    im_ac = Image.frombytes('1',
-                            (font_preview.width(), font_preview.height()),
-                            font_preview.tobytes('1'))
+    png_pal = png.Reader(filename="pd_palette.png")
+    png_pal.preamble()
+    png_out = png.Writer(
+        width=font_preview.width(),
+        height=font_preview.height(),
+        bitdepth=1,
+        palette=png_pal.palette()
+    )
+    px_bytes = font_preview.tobytes('1')
+    px_byte_arr = [access_bit(px_bytes,i) for i in range(len(px_bytes)*8)]
+    png_filename = "png/%s.png" % (font_name)
+    png_file = open(png_filename, 'wb')
     buffered = BytesIO()
-    im_ac.save(buffered, format="PNG")
-    im_ac.save("png/%s.png" % (font_name), format="PNG")
+    png_out.write_array(buffered, px_byte_arr)
+    png_out.write_array(png_file, px_byte_arr)
+    png_file.close()
     img_str = base64.b64encode(buffered.getvalue())
 
     # Write the FNT

@@ -16,6 +16,7 @@ First, you need to install these dependencies:
 * `otf2bdf` (Install via apt-get, brew, etc)
 * `pip install bdfparser`
 * `pip install pillow`
+* `pip install pypng`
 
 ## How to use
 
