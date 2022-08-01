@@ -13,10 +13,13 @@ proprietary FNT format.
 First, you need to install these dependencies:
 
 * Python 3
-* `otf2bdf` (Install via apt-get, brew, etc)
 * `pip install bdfparser`
 * `pip install pillow`
 * `pip install pypng`
+
+Then you need to build the `submodules/otf2bdf` submodule from source.
+This utility uses a custom fork which permits taking the point_size
+parameter as a double instead of int.
 
 ## How to use
 

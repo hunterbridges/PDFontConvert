@@ -1,0 +1,3 @@
+[submodule "submodules/otf2bdf"]
+	path = submodules/otf2bdf
+	url = git@github.com:hunterbridges/otf2bdf.git

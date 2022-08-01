@@ -23,6 +23,13 @@ def access_bit(data, num):
     shift = 7 - int(num % 8)
     return (data[base] >> shift) & 0x1
 
+# This just does the inverse of what otf2bdf does
+def calc_pt_size(px_size):
+    pt_size = px_size - 0.5
+    pt_size = pt_size * 722.7
+    pt_size = pt_size / 1000.0
+    return pt_size
+
 p = Path('.')
 for font_path in p.glob('ttf/*.ttf'):
     font_name = font_path.stem
@@ -36,13 +43,15 @@ for font_path in p.glob('ttf/*.ttf'):
 
     # Convert to point size
     px_size = int(px_size)
-    pt_size = int(math.floor(px_size * 3 / 4))
+    pt_size = calc_pt_size(px_size)
     print(f"{font_name}.ttf ({px_size} px -> {pt_size} pt)")
 
     # Use otf2bdf to convert to bdf
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    otf2bdf_path = '/'.join([dir_path, 'submodules', 'otf2bdf', 'otf2bdf'])
     print("\tConverting to BDF...")
     bdf_path = f"bdf/{font_name}.bdf"
-    args = ['otf2bdf', '-p', f"{pt_size}", '-o', bdf_path, str(font_path)];
+    args = [otf2bdf_path, '-p', f"{pt_size}", '-o', bdf_path, str(font_path)];
     print(f"\t{' '.join(args)}")
     rc = subprocess.run(args)
     if os.path.isfile(bdf_path) == False or os.stat(bdf_path).st_size == 0:
@@ -82,21 +91,36 @@ for font_path in p.glob('ttf/*.ttf'):
 
     # Write the PNG image
     font_preview = font.drawall()
+    png_filename = "png/%s.png" % (font_name)
+    tmp_filename = "png/%s.tmp.png" % (font_name)
+
+    # First write out a (non-transparent) 1-bit png using pillow
+    im_ac = Image.frombytes('1',
+                            (font_preview.width(), font_preview.height()),
+                            font_preview.tobytes('1'))
+    im_ac.save(tmp_filename, format="PNG")
+
+    # Now read that file with pypng
+    png_tmp = png.Reader(filename=tmp_filename)
+    tmp_data = png_tmp.read()
+    scanlines = []
+    for tmp_row in tmp_data[2]:
+        scanlines.append(tmp_row)
+
+    # Make a new file using the pixel data from that file,
+    # but the palette data from the reference png.
     png_pal = png.Reader(filename="pd_palette.png")
     png_pal.preamble()
     png_out = png.Writer(
-        width=font_preview.width(),
-        height=font_preview.height(),
+        width=tmp_data[0],
+        height=tmp_data[1],
         bitdepth=1,
         palette=png_pal.palette()
     )
-    px_bytes = font_preview.tobytes('1')
-    px_byte_arr = [access_bit(px_bytes,i) for i in range(len(px_bytes)*8)]
-    png_filename = "png/%s.png" % (font_name)
     png_file = open(png_filename, 'wb')
     buffered = BytesIO()
-    png_out.write_array(buffered, px_byte_arr)
-    png_out.write_array(png_file, px_byte_arr)
+    png_out.write(buffered, scanlines)
+    png_out.write(png_file, scanlines)
     png_file.close()
     img_str = base64.b64encode(buffered.getvalue())
 
