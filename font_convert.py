@@ -23,35 +23,17 @@ def access_bit(data, num):
     shift = 7 - int(num % 8)
     return (data[base] >> shift) & 0x1
 
-# This just does the inverse of what otf2bdf does
-def calc_pt_size(px_size):
-    pt_size = px_size - 0.5
-    pt_size = pt_size * 722.7
-    pt_size = pt_size / 1000.0
-    return pt_size
-
 p = Path('.')
 for font_path in p.glob('ttf/*.ttf'):
     font_name = font_path.stem
-
-    # Detect font pixel size
-    px_re = re.search('\d+', font_name)
-    px_size = px_re.group(0)
-    if px_size is None:
-        print(f"\tUnable to detect font size from file name '{font_name}'")
-        continue
-
-    # Convert to point size
-    px_size = int(px_size)
-    pt_size = calc_pt_size(px_size)
-    print(f"{font_name}.ttf ({px_size} px -> {pt_size} pt)")
+    print(f"{font_name}.ttf")
 
     # Use otf2bdf to convert to bdf
     dir_path = os.path.dirname(os.path.realpath(__file__))
     otf2bdf_path = '/'.join([dir_path, 'submodules', 'otf2bdf', 'otf2bdf'])
     print("\tConverting to BDF...")
     bdf_path = f"bdf/{font_name}.bdf"
-    args = [otf2bdf_path, '-p', f"{pt_size}", '-o', bdf_path, str(font_path)];
+    args = [otf2bdf_path, '-b', '0', '-n', '-o', bdf_path, str(font_path)]
     print(f"\t{' '.join(args)}")
     rc = subprocess.run(args)
     if os.path.isfile(bdf_path) == False or os.stat(bdf_path).st_size == 0:

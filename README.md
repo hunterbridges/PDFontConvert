@@ -18,8 +18,8 @@ First, you need to install these dependencies:
 * `pip install pypng`
 
 Then you need to build the `submodules/otf2bdf` submodule from source.
-This utility uses a custom fork which permits taking the point_size
-parameter as a double instead of int.
+This utility uses a custom fork which permits conversion using the
+raw bitmap strike data in the font.
 
 ## How to use
 
@@ -28,14 +28,8 @@ parameter as a double instead of int.
 The script scans all TTF files in the `ttf` directory, and attempts
 the conversion process for each found TTF file.
 
-First, the conversion attempts to figure out the pixel-based line height
-from the TTF file name. It does this with a simple regex, searching for the
-first instance of `\d+` (One or more numeric digit characters) in the
-file's basename.
-
-It then converts the pixel size to a point size, using the conversion
-`pt_size = int(math.floor(px_size * 3 / 4))`. Then, it converts
-the TTF to BDF using `otf2bdf` using the derived point size.
+Then, it converts the TTF to BDF with `otf2bdf`, using the first
+available bitmap strike in each TTF.
 
 From there, the script uses bdfparser to open the BDF font, and
 renders out a PNG of all glyphs via Pillow. A copy of the PNG
